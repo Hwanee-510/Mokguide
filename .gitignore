@@ -1,0 +1,39 @@
+# Dart & Flutter 관련
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+.flutter-versions
+.pub-cache/
+.pub/
+build/
+
+# Android 관련
+android/.gradle/
+android/app/debug/
+android/app/profile/
+android/app/release/
+
+# iOS/macOS 관련
+ios/Pods/
+macos/Pods/
+ios/Flutter/.last_build_id
+macos/Flutter/ephemeral/
+macos/**/*.xcuserstate
+macos/**/*.xcworkspace
+
+# IDE 관련 (VSCode, Android Studio 등)
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# 기타 OS 및 툴 관련
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.history
+.svn/

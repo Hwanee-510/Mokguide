@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "845748202878",
+    "firebase_url": "https://capstoned-mok-default-rtdb.firebaseio.com",
+    "project_id": "capstoned-mok",
+    "storage_bucket": "capstoned-mok.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:845748202878:android:9bb1800685f774b8eb172f",
+        "android_client_info": {
+          "package_name": "com.example.qr01"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZCLPzX216QksbjcXb3S47sSK3cRYAPI4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:845748202878:android:6147aed3d6f330cfeb172f",
+        "android_client_info": {
+          "package_name": "kr.co.example.hello"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZCLPzX216QksbjcXb3S47sSK3cRYAPI4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
