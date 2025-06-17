@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/reservation_page.dart';
-import 'package:intl/intl.dart'; // DateFormat을 위해 추가
+import 'package:intl/intl.dart';
+import 'seat.dart'; // seat.dart의 실제 경로를 확인해 주세요
 
 class RoomSelectionPage extends StatefulWidget {
   const RoomSelectionPage({Key? key}) : super(key: key);
@@ -17,44 +17,35 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
     '17:00', '18:00'
   ];
 
-  DateTime _selectedDate = DateTime.now(); // 선택된 날짜 (기본값: 오늘)
+  DateTime _selectedDate = DateTime.now();
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 6)), // const 추가
-      helpText: '예약 날짜 선택',
-      cancelText: '취소',
-      confirmText: '선택',
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
-          data: ThemeData.light().copyWith(
-            colorScheme: const ColorScheme.light( // const 추가
-              primary: Color(0xFF9C2C38),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF9C2C38), // const 추가
-              ),
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
+  // 실제 앱에서는 서버/DB에서 받아올 데이터!
+  final Map<String, List<int>> dummyReserved = {};
+
+  // 내 예약 정보: key='room-time-YYYYMMDD', value=좌석번호
+  Map<String, int> myReservation = {};
+
+  // 오늘 날짜와 비교해서 지난 시간대는 제외
+  List<String> getAvailableTimes() {
+    final now = DateTime.now();
+    return times.where((timeStr) {
+      final slotHour = int.parse(timeStr.split(':')[0]);
+      final timeSlot = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, slotHour);
+      if (_selectedDate.year == now.year &&
+          _selectedDate.month == now.month &&
+          _selectedDate.day == now.day) {
+        // "해당 슬롯의 끝시간(예: 13:00 + 1시간 = 14:00)"이 현재시각 이후여야 활성화
+        final slotEnd = timeSlot.add(Duration(hours: 1));
+        return now.isBefore(slotEnd);
+      }
+      return true; // 오늘이 아니면 모두 활성화
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    final availableTimes = getAvailableTimes();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -79,7 +70,39 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 ElevatedButton(
-                  onPressed: () => _selectDate(context),
+                  onPressed: () async {
+                    final DateTime? picked = await showDatePicker(
+                      context: context,
+                      initialDate: _selectedDate,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(const Duration(days: 6)),
+                      helpText: '예약 날짜 선택',
+                      cancelText: '취소',
+                      confirmText: '선택',
+                      builder: (BuildContext context, Widget? child) {
+                        return Theme(
+                          data: ThemeData.light().copyWith(
+                            colorScheme: const ColorScheme.light(
+                              primary: Color(0xFF9C2C38),
+                              onPrimary: Colors.white,
+                              onSurface: Colors.black,
+                            ),
+                            textButtonTheme: TextButtonThemeData(
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFF9C2C38),
+                              ),
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+                    if (picked != null && picked != _selectedDate) {
+                      setState(() {
+                        _selectedDate = picked;
+                      });
+                    }
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF9C2C38),
                   ),
@@ -91,6 +114,23 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
               ],
             ),
           ),
+
+          // 내 예약 내역 상단 표시
+          if (myReservation.isNotEmpty)
+            Padding(
+              padding: EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: myReservation.entries
+                    .map((e) => Text(
+                          '예약됨: ${e.key.replaceAll("-", " ")} | 좌석 ${e.value}',
+                          style: TextStyle(
+                              color: Colors.blue, fontWeight: FontWeight.bold),
+                        ))
+                    .toList(),
+              ),
+            ),
+
           Expanded(
             child: ListView.builder(
               itemCount: rooms.length,
@@ -109,34 +149,54 @@ class _RoomSelectionPageState extends State<RoomSelectionPage> {
                             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 12),
-
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
-                              children: times.map((time) {
+                              children: availableTimes.map((time) {
+                                String key =
+                                    '${rooms[roomIndex]}-$time-${DateFormat('yyyyMMdd').format(_selectedDate)}';
+                                bool isMyReserved = myReservation.containsKey(key);
+                                List<int> reservedSeats = dummyReserved[key] ?? [];
+
                                 return Padding(
                                   padding: const EdgeInsets.only(right: 8.0),
                                   child: ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => ReservationPage( // 여기에 붙어있던 const를 제거합니다.
-                                            room: rooms[roomIndex],
-                                            time: time,
-                                            selectedDate: _selectedDate,
-                                            isDetailView: false,
-                                          ),
-                                        ),
-                                      );
-                                    },
+                                    onPressed: isMyReserved
+                                        ? null
+                                        : () async {
+                                            final seatNum = await Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => SeatMapPage(
+                                                  room: rooms[roomIndex],
+                                                  time: time,
+                                                  selectedDate: _selectedDate,
+                                                  reservedSeats: reservedSeats,
+                                                ),
+                                              ),
+                                            );
+                                            if (seatNum != null) {
+                                              setState(() {
+                                                myReservation[key] = seatNum;
+                                                dummyReserved[key] =
+                                                    List<int>.from(reservedSeats)
+                                                      ..add(seatNum);
+                                              });
+                                            }
+                                          },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF9C2C38),
-                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                      backgroundColor: isMyReserved
+                                          ? Colors.grey
+                                          : const Color(0xFF9C2C38),
                                     ),
                                     child: Text(
                                       time,
-                                      style: const TextStyle(color: Colors.white),
+                                      style: TextStyle(
+                                        color: isMyReserved
+                                            ? Colors.grey[300]
+                                            : Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 );

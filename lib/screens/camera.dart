@@ -1,138 +1,75 @@
 import 'dart:io';
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' show join;
-import 'package:firebase_core/firebase_core.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'firebase_options.dart';
-
-List<CameraDescription>? cameras;
 
 class CameraPage extends StatefulWidget {
   @override
-  _CameraPageState createState() => _CameraPageState();
+  State<CameraPage> createState() => _CameraPageState();
 }
 
 class _CameraPageState extends State<CameraPage> {
-  CameraController? _controller;
-  late Future<void> _initializeControllerFuture;
   File? _imageFile;
   bool _isUploading = false;
-  String? _uploadedUrl;
 
-  @override
-  void initState() {
-    super.initState();
-    _initializeCamera();
-  }
-
-  void _initializeCamera() async {
-    // 카메라 목록을 받아옵니다
-    cameras = await availableCameras();
-    _controller = CameraController(cameras![0], ResolutionPreset.high);
-    _initializeControllerFuture = _controller!.initialize();
-    setState(() {});
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
-  }
-
-  Future<void> _takePicture() async {
-    try {
-      await _initializeControllerFuture;
-      final dir = await getTemporaryDirectory();
-      final now = DateTime.now();
-      final formatted = '${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}';
-      final filePath = join(dir.path, 'photo_$formatted.png');
-      final xFile = await _controller!.takePicture();
-      await xFile.saveTo(filePath);
-      
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.camera);
+    if (picked != null) {
       setState(() {
-        _imageFile = File(filePath);
+        _imageFile = File(picked.path);
       });
-
-      // 사진 촬영 후, 업로드 기능을 호출합니다.
-      _uploadImage();
-    } catch (e) {
-      print(e);
+      await _uploadImage();
+    } else {
+      // 사진을 안 찍고 나갔을 때도 반납 처리 (원하면 false로 pop)
+      Navigator.pop(context, true);
     }
   }
 
   Future<void> _uploadImage() async {
     if (_imageFile != null) {
       setState(() => _isUploading = true);
+      bool success = false;
       try {
         final now = DateTime.now();
         final fileName = 'photo_${now.year}${now.month}${now.day}_${now.hour}${now.minute}${now.second}.png';
         final ref = FirebaseStorage.instance.ref().child('photos/$fileName');
         await ref.putFile(_imageFile!);
-        
-        final url = await ref.getDownloadURL();
-        
+        success = true;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('업로드 완료!')),
+          SnackBar(content: Text('업로드 완료! 반납이 처리됩니다.')),
         );
-
-        setState(() {
-          _uploadedUrl = url; // 업로드된 URL 저장
-          _imageFile = null; // 사진은 초기화
-        });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('업로드 실패: $e')),
+          SnackBar(content: Text('업로드 실패! 그래도 반납이 처리됩니다.')),
         );
       } finally {
         setState(() => _isUploading = false);
+        // 업로드 성공/실패 상관없이 무조건 반납 처리
+        Navigator.pop(context, true);
       }
+    } else {
+      // 파일 없음 - 그래도 반납 처리
+      Navigator.pop(context, true);
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (_controller == null || !_controller!.value.isInitialized) {
-      return Center(child: CircularProgressIndicator());
-    }
+  void initState() {
+    super.initState();
+    Future.delayed(Duration.zero, _pickImage);
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('자리 촬영')),
       body: Center(
-        child: _imageFile == null
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CameraPreview(_controller!),
-                  ElevatedButton(
-                    onPressed: _takePicture,
-                    child: Text('사진 촬영'),
-                  ),
-                ],
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.file(_imageFile!),
-                  SizedBox(height: 16),
-                  if (_isUploading) CircularProgressIndicator(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        onPressed: _takePicture, // 재촬영
-                        child: Text('재촬영'),
-                      ),
-                      SizedBox(width: 16),
-                      ElevatedButton(
-                        onPressed: _isUploading ? null : _uploadImage,
-                        child: Text('업로드'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+        child: _isUploading
+            ? CircularProgressIndicator()
+            : (_imageFile == null)
+                ? Text('사진을 촬영 중입니다...')
+                : Image.file(_imageFile!),
       ),
     );
   }

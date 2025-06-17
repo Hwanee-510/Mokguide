@@ -3,7 +3,8 @@ class Reservation {
   final String room;
   final String time;
   final String name;
-  final String studentId; // 학번을 studentId로 변경 (number에서)
+  final int seatNum;
+  final String studentId;
   final String major;
 
   Reservation({
@@ -11,6 +12,7 @@ class Reservation {
     required this.room,
     required this.time,
     required this.name,
+    required this.seatNum,
     required this.studentId,
     required this.major,
   });
@@ -22,6 +24,7 @@ class Reservation {
       room: json['room'],
       time: json['time'],
       name: json['name'],
+      seatNum: json['seatNum'],
       studentId: json['studentId'],
       major: json['major'],
     );
@@ -34,6 +37,7 @@ class Reservation {
       'room': room,
       'time': time,
       'name': name,
+      'seatNum': seatNum,           // seatNum 저장
       'studentId': studentId,
       'major': major,
     };

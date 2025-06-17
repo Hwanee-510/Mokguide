@@ -18,49 +18,36 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   Reservation? latestReservation;
-
   bool darkMode = false;
   bool notifications = true;
 
   @override
   void initState() {
     super.initState();
-    _initializeFirebase();  // Firebase 초기화
-    _loadLatestReservation(); // 가장 최근 예약 로드
+    _initializeFirebase();
+    _loadLatestReservation();
   }
 
-  // Firebase 두 번 초기화 함수
   Future<void> _initializeFirebase() async {
-    // 첫 번째 Firebase 앱 초기화 (cam)
     await Firebase.initializeApp(
-      name: 'cam',  // 첫 번째 앱의 이름을 cam으로 지정
-      options: DefaultFirebaseOptions.app1,  // 첫 번째 Firebase 설정
+      name: 'cam',
+      options: DefaultFirebaseOptions.app1,
     );
-    
-    // 두 번째 Firebase 앱 초기화 (qr)
     await Firebase.initializeApp(
-      name: 'qr',  // 두 번째 앱의 이름을 qr로 지정
-      options: DefaultFirebaseOptions.app2,  // 두 번째 Firebase 설정
+      name: 'qr',
+      options: DefaultFirebaseOptions.app2,
     );
   }
 
-  // 가장 최근 예약 정보를 불러오는 함수
   void _loadLatestReservation() {
-    if (allReservations.isNotEmpty) {
-      setState(() {
-        latestReservation = allReservations.last;
-      });
-    } else {
-      setState(() {
-        latestReservation = null;
-      });
-    }
+    setState(() {
+      latestReservation = allReservations.isNotEmpty ? allReservations.last : null;
+    });
   }
 
-  // 예약 취소 함수
   void cancelLatestReservation() {
     if (latestReservation != null) {
-      removeReservation(latestReservation!); // main.dart의 removeReservation 함수 호출
+      removeReservation(latestReservation!);
       setState(() {
         latestReservation = null;
       });
@@ -111,8 +98,7 @@ class _MainPageState extends State<MainPage> {
               ),
               ListTile(
                 title: Text('설정',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ),
               SwitchListTile(
                 title: Text('다크 모드'),
@@ -141,14 +127,12 @@ class _MainPageState extends State<MainPage> {
                 leading: Icon(Icons.list),
                 title: Text('예약 목록'),
                 onTap: () async {
-                  Navigator.pop(context); // 드로어 닫기
-                  // ReservationListPage에서 변경 사항을 반영하기 위해 await 사용
+                  Navigator.pop(context);
                   await Navigator.push(
                     context,
-                    MaterialPageRoute(
-                        builder: (context) => ReservationListPage()),
+                    MaterialPageRoute(builder: (context) => ReservationListPage()),
                   );
-                  _loadLatestReservation(); // 예약 목록 페이지에서 돌아온 후 최신 예약 정보 다시 로드
+                  _loadLatestReservation();
                 },
               ),
             ],
@@ -165,15 +149,25 @@ class _MainPageState extends State<MainPage> {
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 12),
+            // 예약 내역 있을 때만 반납(촬영→반납) 버튼 보임
             if (latestReservation != null)
               ElevatedButton(
-                onPressed: cancelLatestReservation,
+                onPressed: () async {
+                  // CameraPage로 이동, 업로드 성공 시 true 반환 기대
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => CameraPage()),
+                  );
+                  if (result == true) {
+                    cancelLatestReservation();
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey[300],
                   minimumSize: Size(double.infinity, 40),
                 ),
                 child: Text(
-                  '예약 취소',
+                  '반납하기',
                   style: TextStyle(fontSize: 16, color: Colors.black),
                 ),
               ),
@@ -181,30 +175,29 @@ class _MainPageState extends State<MainPage> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => RoomSelectionPage()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF9C2C38),
-                    minimumSize: Size(double.infinity, 50),
+                if (latestReservation == null)
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => RoomSelectionPage()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF9C2C38),
+                      minimumSize: Size(double.infinity, 50),
+                    ),
+                    child: Text(
+                      '강의실 예약',
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    ),
                   ),
-                  child: Text(
-                    '강의실 예약',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                ),
                 SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => QRPage(), // QRPage로 이동
-                      ),
+                      MaterialPageRoute(builder: (context) => QRPage()),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -217,24 +210,7 @@ class _MainPageState extends State<MainPage> {
                   ),
                 ),
                 SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => CameraPage()), // 카메라 페이지로 이동
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF9C2C38),
-                    minimumSize: Size(double.infinity, 50),
-                  ),
-                  child: Text(
-                    '반납하기',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                ),
-                SizedBox(height: 16),
+                // 자리 촬영 버튼은 완전히 제거!
                 ElevatedButton(
                   onPressed: () {
                     // TODO: 설정 기능 구현
