@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore 사용을 위한 임포트
-import 'camera.dart';  // 카메라 기능 임포트
-import 'qr.dart';      // QR 코드 생성 기능 임포트
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'camera.dart';
+import 'qr.dart';
 import 'package:flutter_application_1/screens/room_selection_page.dart';
 import 'package:flutter_application_1/screens/reservation_list_page.dart';
-import 'package:flutter_application_1/main.dart'; // main.dart에서 예약 내역 접근을 위해 임포트
-import 'package:flutter_application_1/models/reservation.dart'; // Reservation 모델 임포트
-import 'firebase_options.dart'; // firebase_options.dart 임포트
+import 'package:flutter_application_1/main.dart'; // globalStudentId 포함
+import 'package:flutter_application_1/models/reservation.dart';
+import 'firebase_options.dart';
 
 class MainPage extends StatefulWidget {
   MainPage();
@@ -149,11 +149,10 @@ class _MainPageState extends State<MainPage> {
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 12),
-            // 예약 내역 있을 때만 반납(촬영→반납) 버튼 보임
-            if (latestReservation != null)
+
+            if (latestReservation != null) ...[
               ElevatedButton(
                 onPressed: () async {
-                  // CameraPage로 이동, 업로드 성공 시 true 반환 기대
                   final result = await Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => CameraPage()),
@@ -167,10 +166,23 @@ class _MainPageState extends State<MainPage> {
                   minimumSize: Size(double.infinity, 40),
                 ),
                 child: Text(
-                  '반납하기',
+                  '반납(자리 촬영)',
                   style: TextStyle(fontSize: 16, color: Colors.black),
                 ),
               ),
+              SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: cancelLatestReservation,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red[100],
+                  minimumSize: Size(double.infinity, 40),
+                ),
+                child: Text(
+                  '예약 취소',
+                  style: TextStyle(fontSize: 16, color: Colors.red[800]),
+                ),
+              ),
+            ],
             Spacer(),
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -197,7 +209,9 @@ class _MainPageState extends State<MainPage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => QRPage()),
+                      MaterialPageRoute(
+                        builder: (context) => QRPage(studentId: globalStudentId),
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -206,21 +220,6 @@ class _MainPageState extends State<MainPage> {
                   ),
                   child: Text(
                     'QR 코드',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  ),
-                ),
-                SizedBox(height: 16),
-                // 자리 촬영 버튼은 완전히 제거!
-                ElevatedButton(
-                  onPressed: () {
-                    // TODO: 설정 기능 구현
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF9C2C38),
-                    minimumSize: Size(double.infinity, 50),
-                  ),
-                  child: Text(
-                    '설정',
                     style: TextStyle(fontSize: 18, color: Colors.white),
                   ),
                 ),

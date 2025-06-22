@@ -1,21 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'firebase_options.dart';
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: QRPage(),
-    );
-  }
-}
 
 class QRPage extends StatefulWidget {
+  final String? studentId;
+
+  QRPage({this.studentId});
+
   @override
   State<QRPage> createState() => _QRPageState();
 }
@@ -28,7 +20,17 @@ class _QRPageState extends State<QRPage> {
 
   final _idController = TextEditingController();
   bool qrVisible = false;
-  bool isRotating = false; // 새로고침 애니메이션용
+  bool isRotating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // studentId가 넘어오면 자동 생성
+    if (widget.studentId != null && widget.studentId!.isNotEmpty) {
+      _idController.text = widget.studentId!;
+      fetchDataAndShowQR();
+    }
+  }
 
   @override
   void dispose() {
@@ -72,7 +74,6 @@ class _QRPageState extends State<QRPage> {
   }
 
   void manualRefresh() {
-    // 새로고침 애니메이션 효과
     setState(() => isRotating = true);
     Future.delayed(Duration(milliseconds: 700), () {
       setState(() => isRotating = false);
@@ -86,7 +87,7 @@ class _QRPageState extends State<QRPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("QR코드 생성기")),
+      appBar: AppBar(title: Text("QR코드")),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Center(
@@ -94,22 +95,23 @@ class _QRPageState extends State<QRPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (!qrVisible) ...[
+                // studentId가 없으면 수동 입력 허용
+                if (widget.studentId == null) ...[
                   TextField(
                     controller: _idController,
                     decoration: InputDecoration(
-                    labelText: '학번 입력',
-                    border: OutlineInputBorder(),
+                      labelText: '학번 입력',
+                      border: OutlineInputBorder(),
                     ),
-                    keyboardType: TextInputType.number, // 숫자패드로 변경!
-                    ),
+                    keyboardType: TextInputType.number,
+                  ),
                   SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: fetchDataAndShowQR,
                     child: Text("QR코드 생성"),
                   ),
-                ] else ...[
-                  // 새로고침(회전 아이콘+텍스트)
+                ],
+                if (qrVisible) ...[
                   GestureDetector(
                     onTap: manualRefresh,
                     child: Row(

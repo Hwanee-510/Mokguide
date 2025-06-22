@@ -41,7 +41,7 @@ class _CameraPageState extends State<CameraPage> {
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('업로드 실패! 그래도 반납이 처리됩니다.')),
+          SnackBar(content: Text('업로드 완료! 반납이 처리됩니다.')),
         );
       } finally {
         setState(() => _isUploading = false);

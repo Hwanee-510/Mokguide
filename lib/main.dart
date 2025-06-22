@@ -9,6 +9,7 @@ import 'package:intl/date_symbol_data_local.dart'; // ⭐ 이 줄을 추가합�
 // SharedPreferences를 사용하여 데이터를 영구적으로 저장하고 로드합니다.
 late SharedPreferences _prefs;
 List<Reservation> allReservations = []; // 모든 예약 내역을 저장하는 리스트
+String? globalStudentId;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

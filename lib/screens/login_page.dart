@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/main_page.dart';
+// main.dart에 전역 변수 선언됨
+import 'package:flutter_application_1/main.dart';
 
 class LoginPage extends StatelessWidget {
   final TextEditingController idController = TextEditingController();
@@ -12,23 +14,20 @@ class LoginPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Color(0xFF9C2C38),
         title: Text(
-          '로그인 페이지',
-          style: TextStyle(color: Colors.white), // 텍스트 색상 추가
+          '로그인',
+          style: TextStyle(color: Colors.white),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.home, color: Colors.white), // 아이콘 색상 추가
-            onPressed: () {
-              // 홈 버튼 클릭 시 동작
-              print("홈버튼 클릭");
-            },
+            icon: Icon(Icons.home, color: Colors.white),
+            onPressed: () {},
           ),
         ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center, // 화면 가운데 정렬
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(height: 16),
             Text(
@@ -61,18 +60,11 @@ class LoginPage extends StatelessWidget {
             SizedBox(height: 32),
             ElevatedButton(
               onPressed: () {
-                // TODO: 실제 로그인 로직 구현 필요
-                // 현재는 단순히 MainPage로 이동
+                // 로그인 성공 시 학번을 전역 변수에 저장
+                globalStudentId = idController.text.trim();
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => MainPage(
-                      // 로그인 시 초기 예약 정보를 넘겨줄 필요가 없으므로 제거
-                      // date: '2024.04.07 (월)',
-                      // room: 'D421',
-                      // time: '09:00',
-                    ),
-                  ),
+                  MaterialPageRoute(builder: (context) => MainPage()),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -81,7 +73,7 @@ class LoginPage extends StatelessWidget {
               ),
               child: Text(
                 '로그인',
-                style: TextStyle(fontSize: 18, color: Colors.white), // 텍스트 색상 변경
+                style: TextStyle(fontSize: 18, color: Colors.white),
               ),
             ),
           ],
